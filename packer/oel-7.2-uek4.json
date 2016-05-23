@@ -1,0 +1,64 @@
+{
+   "variables": { 
+      "harddisk_size" : "40960",
+      "compression": "6",
+      "vm_name": "oel-7.2-uek4",
+      "vm_version": "0.1",
+      "project_folder": "/Users/mcarto/Develop/PackerBox"
+   },
+   "builders": [
+    {
+      "type": "virtualbox-iso",
+      "virtualbox_version_file": ".vbox_version",
+      "vm_name": "{{user `vm_name`}}",
+      "boot_command": [
+        "<esc><esc>vmlinuz initrd=initrd.img ks=http://", "{{ .HTTPIP }}", ":", "{{ .HTTPPort }}", 
+        "/kickstart/oel7u2/uek4.ks ksdevice=bootif ramdisk_size=200000 ipv6.disable=1 selinux=0<enter><wait>"
+      ],
+      "boot_wait": "5s",
+      "disk_size": "{{user `harddisk_size`}}",
+      
+      "guest_os_type": "Oracle_64",
+      "headless": "true",
+      
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      
+      "http_directory": "{{user `project_folder`}}/http",
+      "http_port_min" : "9001",
+      "http_port_max": "9001",
+      
+      "iso_checksum": "3b9d65d26576921372b1b35b03fd791d",
+      "iso_checksum_type": "none",
+      "iso_url": "{{user `project_folder`}}/iso/V100082-01-full.iso",
+      
+      "ssh_wait_timeout": "1800s",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      
+      "vboxmanage": [
+        [ "modifyvm", "{{.Name}}", "--memory", "2048" ],
+        [ "modifyvm", "{{.Name}}", "--cpus", "1" ]
+      ],
+      
+      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
+      "output_directory": "packer-build"
+      
+    }],
+   "provisioners": [{
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "scripts": [
+         "scripts/afterconfig.sh",
+         "scripts/vboxguest.sh",
+         "scripts/sshd.sh",
+         "scripts/compact.sh"
+      ]
+   }],
+   "post-processors": [
+      {
+      "output": "boxes/{{user `vm_name`}}-{{user `vm_version`}}.box",
+      "type": "vagrant",
+      "compression_level": "{{user `compression`}}"
+      }
+   ]
+}
